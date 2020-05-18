@@ -105,8 +105,8 @@ long LinuxParser::UpTime() {
     std::getline(stream, line);
     std::istringstream linestream(line);
     linestream >> uptime;
-    return uptime;
   }
+  return uptime;
 }
 
 // TODO: Read and return CPU utilization
@@ -123,6 +123,7 @@ vector<string> LinuxParser::CpuUtilization() {
       }
     }
   }
+  return {user, nice, system, idle, iowait, irq, softirq, steal, guest, guest_nice};
 }
 
 // TODO: Read and return the total number of processes
@@ -141,6 +142,7 @@ int LinuxParser::TotalProcesses() {
       }
     }
   }
+  return value;
 }
 
 // TODO: Read and return the number of running processes
@@ -159,6 +161,7 @@ int LinuxParser::RunningProcesses() {
       }
     }
   }
+  return value;
 }
 
 // TODO: Read and return the command associated with a process
@@ -173,6 +176,7 @@ string LinuxParser::Command(int pid) {
       return command;
     }
   }
+  return command;
 }
 
 // TODO: Read and return the memory used by a process
@@ -185,11 +189,12 @@ string LinuxParser::Ram(int pid) {
       istringstream linestream(line);
       while (linestream >> key >> memUtil) {
         if (key == "VmSize:") {
-          return to_string(stoi(memUtil) / 100);
+          return to_string(stoi(memUtil) / 1000);
         }
       }
     }
   }  
+  return memUtil;
 }
 
 // TODO: Read and return the user ID associated with a process
@@ -207,6 +212,7 @@ string LinuxParser::Uid(int pid) {
       }
     }
   }  
+  return uid;
 }
 
 // TODO: Read and return the user associated with a process
@@ -226,13 +232,14 @@ string LinuxParser::User(int pid) {
       }
     }
   }  
+  return name;
 }
 
 // TODO: Read and return the uptime of a process
 // REMOVE: [[maybe_unused]] once you define the function
 long LinuxParser::UpTime(int pid) {
   long token1, token2, token3, upTime;
-  ifstream filestream(kPasswordPath);
+  ifstream filestream(kProcDirectory + to_string(pid) + kStatFilename);
   string line;
   if (filestream.is_open()) {
     int lineCount = 1;
@@ -264,6 +271,7 @@ float LinuxParser::CpuUtilization(int pid) {
       lineCount++;
     }
   }
+// NOTE: I am using calculation that is provided in course guide hovewer I am not able to get correct value, same with processor cpu utilization
   float Hertz = sysconf(_SC_CLK_TCK);
   float upTime = LinuxParser::UpTime(pid);
   float totalTime = utime + stime;

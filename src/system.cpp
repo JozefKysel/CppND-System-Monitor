@@ -26,6 +26,10 @@ Processor& System::Cpu() { return cpu_; }
 // TODO: Return a container composed of the system's processes
 vector<Process>& System::Processes() { 
   vector<int> pids = LinuxParser::Pids();
+  for (auto process : processes_) {
+    processes_.pop_back();
+  }
+  
   for (int pid : pids) {
     string command = LinuxParser::Command(pid);
     long int time = LinuxParser::UpTime(pid);

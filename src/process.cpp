@@ -16,9 +16,7 @@ Process::Process(int pid, string user, float cpu, string ram, long int time, str
 int Process::Pid() const { return pid_; }
 
 // TODO: Return this process's CPU utilization
-float Process::CpuUtilization() const { 
-  return pid_;
-}
+float Process::CpuUtilization() const { return cpu_; }
 
 // TODO: Return the command that generated this process
 string Process::Command() const { return command_; }

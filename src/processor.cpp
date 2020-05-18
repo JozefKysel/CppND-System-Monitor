@@ -29,11 +29,12 @@ float Processor::Utilization() {
   guest = parsedUtilData[8];
   guest_nice = parsedUtilData[9];
   
-  user -= guest;
-  nice -= guest_nice;
-  idle += iowait;
-  system += irq + softirq;
-  guest += guest_nice;
-  total = user + nice + system + idle + steal + guest; 
+// NOTE: i followed this post https://stackoverflow.com/questions/23367857/accurate-calculation-of-cpu-usage-given-in-percentage-in-linux when calculating the cpu utilization 
+  user = user - guest;
+  nice = nice - guest_nice;
+  idle = idle + iowait;
+  system = system + irq + softirq;
+  long viralTime = guest + guest_nice;
+  long total = user + nice + system + idle + steal + viralTime; 
   return (total - idle)/total;
 }
