@@ -238,45 +238,59 @@ string LinuxParser::User(int pid) {
 // TODO: Read and return the uptime of a process
 // REMOVE: [[maybe_unused]] once you define the function
 long LinuxParser::UpTime(int pid) {
-  long token1, token2, token3, upTime;
+  long upTime;
+  inst const upTimePosition = 21;
   ifstream filestream(kProcDirectory + to_string(pid) + kStatFilename);
   string line;
   if (filestream.is_open()) {
-    int lineCount = 1;
     while(getline(filestream, line)) {
       istringstream linestream(line);
-      if (lineCount == 2) {
-        linestream >> token1 >> token2 >> token3 >> upTime;
+      int position = 0;
+      while (linestream >> upTime) {
+        if (position == upTimePosition) {
+          return upTime;
+        }
+        position++;
       }
-      lineCount++;
     }
   }
   return upTime;
 }
 
 float LinuxParser::CpuUtilization(int pid) {
-  float token1, token2, token3, token4, token5, token6,token7, token8, token9, token10, token11, token12, token13;
-  float utime, stime, cutime, cstime, starttime;
+  long token;
+  long utime, stime, cutime, cstime;
+  long starttime = LinuxParser::UpTime(pid);
+  int const utimePosition = 13;
+  int const stimePosition = 14;
+  int const cutimePosition = 15;
+  int const cstimePosition = 16;
   ifstream filestream(kProcDirectory + to_string(pid) + kStatFilename);
   string line;
   if (filestream.is_open()) {
-    int lineCount = 1;
     while(getline(filestream, line)) {
       istringstream linestream(line);
-      if (lineCount == 1) {
-        linestream >> token1 >> token2 >> token3 >> token4 >> token5 >> token6 >> token7 >> token8 >> token9 >> token10 >> token11 >> token12 >> token13 >> utime >> stime >> cutime >> cstime;
-      } else if (lineCount == 2) {
-        linestream >> token1 >> token2 >> token3 >> token4 >> starttime;
+      int position = 0;
+      while (linestream >> token) {
+        if (position == utimePosition) {
+          utime = token;
+        } else if(position == stimePosition) {
+          stime = token;
+        } else if(position == cutimePosition) {
+          cutime = token;
+        } else if(position == cstimePosition) {
+          cstime = token;
+        }
+        position++;
       }
-      lineCount++;
     }
   }
-// NOTE: I am using calculation that is provided in course guide hovewer I am not able to get correct value, same with processor cpu utilization
-  float Hertz = sysconf(_SC_CLK_TCK);
-  float upTime = LinuxParser::UpTime(pid);
-  float totalTime = utime + stime;
+
+  long Hertz = sysconf(_SC_CLK_TCK);
+  long systemUpTime = LinuxParser::UpTime();
+  long totalTime = utime + stime;
   totalTime = totalTime + cutime + cstime;
-  float seconds = upTime - (starttime / Hertz);
-  float secondsNonZero = seconds > 0 ? seconds : 1;
-  return 100 * ((totalTime / Hertz) / secondsNonZero);
+  long seconds = systemUpTime - (starttime / Hertz);
+  long secondsNonZero = seconds > 0 ? seconds : 1;
+  return (totalTime / Hertz) / secondsNonZero;
 }

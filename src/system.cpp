@@ -32,7 +32,7 @@ vector<Process>& System::Processes() {
   
   for (int pid : pids) {
     string command = LinuxParser::Command(pid);
-    long int time = LinuxParser::UpTime(pid);
+    long int time = LinuxParser::UpTime() - LinuxParser::UpTime(pid);
     string user = LinuxParser::User(pid);
     string ram = LinuxParser::Ram(pid);
     float cpu = LinuxParser::CpuUtilization(pid);
