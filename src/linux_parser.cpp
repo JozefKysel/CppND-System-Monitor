@@ -8,6 +8,7 @@
 
 using std::stof;
 using std::stoi;
+using std::stol;
 using std::string;
 using std::to_string;
 using std::vector;
@@ -98,7 +99,7 @@ float LinuxParser::MemoryUtilization() {
 
 // TODO: Read and return the system uptime
 long LinuxParser::UpTime() { 
-  float uptime;
+  long uptime;
   string line;
   std::ifstream stream(kProcDirectory + kUptimeFilename);
   if (stream.is_open()) {
@@ -112,18 +113,18 @@ long LinuxParser::UpTime() {
 // TODO: Read and return CPU utilization
 vector<string> LinuxParser::CpuUtilization() { 
   string line;
-  string lineKey, user, nice, system, idle, iowait, irq, softirq, steal, guest, guest_nice;
+  string value;
+  vector<string> values;
   std::ifstream filestream(kProcDirectory + kStatFilename);
   if(filestream.is_open()) {
-    while(getline(filestream, line)) {
-      istringstream linestream(line);
-      linestream >> lineKey >> user >> nice >> system >> idle >> iowait >> irq >> softirq >> steal >> guest >> guest_nice;
-      if (lineKey == "cpu") {
-        return {user, nice, system, idle, iowait, irq, softirq, steal, guest, guest_nice};
-      }
+    getline(filestream, line);
+    istringstream linestream(line);
+    while(linestream >> value)
+    if (value != "cpu") {
+      values.push_back(value);
     }
   }
-  return {user, nice, system, idle, iowait, irq, softirq, steal, guest, guest_nice};
+  return values;
 }
 
 // TODO: Read and return the total number of processes
@@ -239,20 +240,20 @@ string LinuxParser::User(int pid) {
 // REMOVE: [[maybe_unused]] once you define the function
 long LinuxParser::UpTime(int pid) {
   long upTime;
-  inst const upTimePosition = 21;
+  int const upTimePosition = 21;
   ifstream filestream(kProcDirectory + to_string(pid) + kStatFilename);
   string line;
   if (filestream.is_open()) {
-    while(getline(filestream, line)) {
-      istringstream linestream(line);
-      int position = 0;
-      while (linestream >> upTime) {
-        if (position == upTimePosition) {
-          return upTime;
-        }
-        position++;
+    getline(filestream, line);
+    istringstream linestream(line);
+    int position = 0;
+    while (linestream >> upTime) {
+      if (position == upTimePosition) {
+        return upTime / sysconf(_SC_CLK_TCK);
       }
+      position++;
     }
+    
   }
   return upTime;
 }
@@ -268,22 +269,22 @@ float LinuxParser::CpuUtilization(int pid) {
   ifstream filestream(kProcDirectory + to_string(pid) + kStatFilename);
   string line;
   if (filestream.is_open()) {
-    while(getline(filestream, line)) {
-      istringstream linestream(line);
-      int position = 0;
-      while (linestream >> token) {
-        if (position == utimePosition) {
-          utime = token;
-        } else if(position == stimePosition) {
-          stime = token;
-        } else if(position == cutimePosition) {
-          cutime = token;
-        } else if(position == cstimePosition) {
-          cstime = token;
-        }
-        position++;
+    getline(filestream, line);
+    istringstream linestream(line);
+    int position = 0;
+    while (linestream >> token) {
+      if (position == utimePosition) {
+        utime = token;
+      } else if(position == stimePosition) {
+        stime = token;
+      } else if(position == cutimePosition) {
+        cutime = token;
+      } else if(position == cstimePosition) {
+        cstime = token;
       }
+      position++;
     }
+
   }
 
   long Hertz = sysconf(_SC_CLK_TCK);
@@ -291,6 +292,5 @@ float LinuxParser::CpuUtilization(int pid) {
   long totalTime = utime + stime;
   totalTime = totalTime + cutime + cstime;
   long seconds = systemUpTime - (starttime / Hertz);
-  long secondsNonZero = seconds > 0 ? seconds : 1;
-  return (totalTime / Hertz) / secondsNonZero;
+  return (totalTime / Hertz) / seconds;
 }
